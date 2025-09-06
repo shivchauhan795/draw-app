@@ -1,6 +1,5 @@
 import axios from "axios";
 import { BACKEND_URL, getToken } from "../../utils";
-import { parse } from "path";
 
 type Shapes = {
     type: "rect",
@@ -84,7 +83,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
 function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], canvas: HTMLCanvasElement) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "rgba(0, 0, 0)";
+    ctx.fillStyle = "rgba(18, 18, 18)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     console.log(existingDrawings);
     if (existingDrawings.length > 0) {
