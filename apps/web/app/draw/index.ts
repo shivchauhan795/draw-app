@@ -15,7 +15,7 @@ type Shapes = {
     radius: number;
 }
 
-export default async function initDraw(canvas: HTMLCanvasElement, shapes: any[], roomID: Number, socket: WebSocket, slug: string) {
+export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number, socket: WebSocket, slug: string) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 

@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import initDraw from "../draw";
 
-export default function Canvas({ shapes, roomID, socket, isLoading, setIsLoading, slug }: { shapes: any[], roomID: Number, socket: WebSocket, isLoading: boolean, setIsLoading: Function, slug: string }) {
+export default function Canvas({ roomID, socket, isLoading, setIsLoading, slug }: { roomID: Number, socket: WebSocket, isLoading: boolean, setIsLoading: Function, slug: string }) {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         if (canvasRef.current) {
-            initDraw(canvasRef.current, shapes, roomID, socket, slug);
+            initDraw(canvasRef.current, roomID, socket, slug);
         }
     }, [canvasRef])
 

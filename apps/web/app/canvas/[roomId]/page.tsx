@@ -1,22 +1,20 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import initDraw from "../../draw";
 import axios from "axios";
 import { BACKEND_URL, getToken } from "../../../utils";
 import { useSocket } from "../../hooks/useSocket";
 import Canvas from "../../components/Canvas";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 export default function CanvasPage() {
     const token = getToken();
     const params = useParams();
-    const [shapes, setshapes] = useState([]);
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [roomID, setRoomID] = useState<Number>();
 
     const { socket, loading } = useSocket();
 
-    // const canvasRef = useRef<HTMLCanvasElement>(null)
 
     const getRoomID = async () => {
         try {
@@ -25,9 +23,14 @@ export default function CanvasPage() {
                     Authorization: `${token}`
                 }
             });
+            if (!response.data || !response.data.id) {
+                router.push("/");
+                return;
+            }
             setRoomID(response.data.id);
-        } catch (e) {
-            console.error(e);
+
+        } catch (error) {
+            router.push("/");
         }
     }
 
@@ -48,5 +51,5 @@ export default function CanvasPage() {
 
     if (!socket || roomID === undefined) return <div>Loading...</div>;
 
-    return <Canvas shapes={shapes} slug={params.roomId as string} roomID={roomID} socket={socket} isLoading={isLoading} setIsLoading={setIsLoading} />
+    return <Canvas slug={params.roomId as string} roomID={roomID} socket={socket} isLoading={isLoading} setIsLoading={setIsLoading} />
 }
