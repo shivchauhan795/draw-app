@@ -6,6 +6,7 @@ import HandIcon from '../icons/hand.svg';
 import HandIconFilled from '../icons/hand_filled.svg';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { stateContext } from '../utils/context/stateContext';
 
 const Icons = [
     { icon: HandIcon, filledIcon: HandIconFilled, name: "Pan", key: "1" },
@@ -15,7 +16,7 @@ const Icons = [
 
 const Toolbar = () => {
 
-    const [isSelected, setIsSelected] = useState("");
+    const { isSelected, setIsSelected } = stateContext();
 
     useEffect(() => {
         const onkeydown = (e: KeyboardEvent) => {
