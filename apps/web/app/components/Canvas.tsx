@@ -7,12 +7,14 @@ import Toolbar from "./ToolBar";
 export default function Canvas({ roomID, socket, isLoading, setIsLoading, slug }: { roomID: Number, socket: WebSocket, isLoading: boolean, setIsLoading: Function, slug: string }) {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const initRef = useRef(false);
 
     useEffect(() => {
-        if (canvasRef.current) {
+        if (canvasRef.current && !initRef.current) {
+            initRef.current = true;
             initDraw(canvasRef.current, roomID, socket, slug);
         }
-    }, [canvasRef])
+    }, [])
 
     return <div className="relative">
         <canvas style={{

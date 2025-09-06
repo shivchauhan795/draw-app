@@ -34,7 +34,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
     canvas.height = window.innerHeight;
 
     clearCanvas(ctx, exsistingDrawings, canvas);
-    
+
     let clicked = false;
     let startX = 0;
     let startY = 0;
@@ -43,12 +43,10 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
         clicked = true;
         startX = e.clientX;
         startY = e.clientY;
-        console.log(e.clientX, e.clientY, "mouse down");
     });
 
     canvas.addEventListener("mouseup", (e) => {
         clicked = false;
-        console.log(e.clientX, e.clientY, "mouse up");
         const shape: Shapes = {
             type: "rect",
             x: startX,
@@ -85,11 +83,8 @@ function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "rgba(18, 18, 18)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    console.log(existingDrawings);
     if (existingDrawings.length > 0) {
         existingDrawings.forEach((shape) => {
-            // const parsedShape = JSON.parse(shape.type);
-            console.log(shape);
             if (shape.type === "rect") {
                 ctx.strokeStyle = "rgba(255,255,255";
                 ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
@@ -115,6 +110,6 @@ async function getExistingShapes(roomID: Number) {
         });
         return shapes;
     } catch (e) {
-        // console.error(e);
+        console.log(e);
     }
 }
