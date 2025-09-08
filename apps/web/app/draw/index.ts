@@ -14,7 +14,7 @@ type Shapes = {
     radius: number;
 }
 
-export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number, socket: WebSocket, slug: string) {
+export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number, socket: WebSocket, slug: string, toolRef: React.RefObject<string>) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -25,9 +25,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
             const parsedMessage = JSON.parse(message.message);
             exsistingDrawings.push(parsedMessage);
             clearCanvas(ctx, exsistingDrawings, canvas);
-            // @ts-ignore
-            const selectedTool = window.setTool
-            console.log(selectedTool);
+            console.log(toolRef.current);
         }
     }
 

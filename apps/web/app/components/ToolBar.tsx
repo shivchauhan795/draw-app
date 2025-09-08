@@ -22,20 +22,12 @@ const Toolbar = () => {
         const onkeydown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
                 setIsSelected("");
-                // @ts-ignore
-                window.setTool = '';
             } else if (e.key === Icons[0]?.key) {
                 setIsSelected("Pan");
-                // @ts-ignore
-                window.setTool = 'Pan';
             } else if (e.key === Icons[1]?.key) {
                 setIsSelected("Rectangle");
-                // @ts-ignore
-                window.setTool = 'Rectangle';
             } else if (e.key === Icons[2]?.key) {
                 setIsSelected("Circle");
-                // @ts-ignore
-                window.setTool = 'Circle';
             }
         }
         window.addEventListener("keydown", onkeydown);
@@ -53,7 +45,9 @@ const Toolbar = () => {
                             key={index}
                             className={`relative p-2 transition-colors rounded-lg cursor-pointer outline-none ${isSelected === item.name ? "bg-[#403e6a]" : "hover:bg-[#424245]"}`}
                             title={item.name}
-                            onClick={() => setIsSelected(item.name)}
+                            onClick={() => {
+                                setIsSelected(item.name);
+                            }}
                         >
                             <Image
                                 src={isSelected === item.name ? item.filledIcon : item.icon}
