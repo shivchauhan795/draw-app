@@ -22,12 +22,20 @@ const Toolbar = () => {
         const onkeydown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
                 setIsSelected("");
+                // @ts-ignore
+                window.setTool = '';
             } else if (e.key === Icons[0]?.key) {
                 setIsSelected("Pan");
+                // @ts-ignore
+                window.setTool = 'Pan';
             } else if (e.key === Icons[1]?.key) {
                 setIsSelected("Rectangle");
+                // @ts-ignore
+                window.setTool = 'Rectangle';
             } else if (e.key === Icons[2]?.key) {
                 setIsSelected("Circle");
+                // @ts-ignore
+                window.setTool = 'Circle';
             }
         }
         window.addEventListener("keydown", onkeydown);

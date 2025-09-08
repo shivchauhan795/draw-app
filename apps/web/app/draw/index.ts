@@ -25,6 +25,9 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
             const parsedMessage = JSON.parse(message.message);
             exsistingDrawings.push(parsedMessage);
             clearCanvas(ctx, exsistingDrawings, canvas);
+            // @ts-ignore
+            const selectedTool = window.setTool
+            console.log(selectedTool);
         }
     }
 
