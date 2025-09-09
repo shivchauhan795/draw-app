@@ -14,9 +14,17 @@ type Shapes = {
     radius: number;
 }
 
-export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number, socket: WebSocket, slug: string, toolRef: React.RefObject<string>) {
+export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number, socket: WebSocket, slug: string, toolRef: React.RefObject<string>, panRef: React.RefObject<{ panX: number, panY: number, scale: number, updateCanvas: Function }>) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    let scale = 1;  // initial zoom level
+
+    let panX = 0;
+    let panY = 0;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    let isPanning = false;
 
     socket.onmessage = (e) => {
         const message = JSON.parse(e.data);
@@ -24,7 +32,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
         if (message.type === "chat") {
             const parsedMessage = JSON.parse(message.message);
             exsistingDrawings.push(parsedMessage);
-            clearCanvas(ctx, exsistingDrawings, canvas);
+            clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
             console.log(toolRef.current);
         }
     }
@@ -34,7 +42,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    clearCanvas(ctx, exsistingDrawings, canvas);
+    clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
 
     let clicked = false;
     let startX = 0;
@@ -42,48 +50,134 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
 
     canvas.addEventListener("mousedown", (e) => {
         clicked = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        const { x, y } = screenToCanvas(e.clientX, e.clientY, canvas, panX, panY, scale);
+        startX = x;
+        startY = y;
+        if (toolRef.current === "Pan") {
+            isPanning = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        }
     });
 
     canvas.addEventListener("mouseup", (e) => {
         clicked = false;
+        isPanning = false;
+        const { x: endX, y: endY } = screenToCanvas(e.clientX, e.clientY, canvas, panX, panY, scale);
+
         const shape: Shapes = {
             type: "rect",
             x: startX,
             y: startY,
-            width: e.clientX - startX,
-            height: e.clientY - startY
+            width: endX - startX,
+            height: endY - startY
         }
-        exsistingDrawings.push(shape);
+        if (toolRef.current === 'Rectangle') {
 
-        socket.send(
-            JSON.stringify({
-                type: "chat",
-                message: JSON.stringify(shape),
-                roomId: slug
-            })
-        );
+            if (shape.width == 0 && shape.height == 0) return;
+            exsistingDrawings.push(shape);
+
+            socket.send(
+                JSON.stringify({
+                    type: "chat",
+                    message: JSON.stringify(shape),
+                    roomId: slug
+                })
+            );
+        }
     });
 
     canvas.addEventListener("mousemove", (e) => {
-        if (clicked) {
-            const width = e.clientX - startX;
-            const height = e.clientY - startY;
-            clearCanvas(ctx, exsistingDrawings, canvas);
-            ctx.strokeStyle = "rgba(255,255,255";
+
+        if (clicked && toolRef.current === "Rectangle") {
+            const { x: currentX, y: currentY } = screenToCanvas(e.clientX, e.clientY, canvas, panX, panY, scale);
+            const width = currentX - startX;
+            const height = currentY - startY;
+            clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
+            ctx.save();
+            ctx.translate(panX, panY);
+            ctx.scale(scale, scale);
+            ctx.strokeStyle = "rgba(255,255,255)";
             ctx.strokeRect(startX, startY, width, height);
+            ctx.restore();
+        }
+        if (clicked && toolRef.current === 'Pan') {
+            const dx = e.clientX - lastMouseX;
+            const dy = e.clientY - lastMouseY;
+
+            panX += dx;
+            panY += dy;
+
+            panRef.current.panX = panX;
+            panRef.current.panY = panY;
+            panRef.current.scale = scale;
+
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
         }
     });
 
+    canvas.addEventListener("wheel", (e) => {
+        e.preventDefault();
+
+        const zoomIntensity = 0.1;
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+
+        // Get mouse position relative to canvas
+        const rect = canvas.getBoundingClientRect();
+        const x = mouseX - rect.left;
+        const y = mouseY - rect.top;
+
+        // Calculate zoom direction
+        const zoom = e.deltaY < 0 ? 1 + zoomIntensity : 1 - zoomIntensity;
+
+        // Adjust pan to zoom at the mouse position
+        panX = x - ((x - panX) * zoom);
+        panY = y - ((y - panY) * zoom);
+
+
+        scale *= zoom;
+        scale = Math.max(0.1, Math.min(scale, 7)); // clamp between 0.1x and 10x
+        panRef.current.panX = panX;
+        panRef.current.panY = panY;
+        panRef.current.scale = scale;
+        clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
+    })
+
+    panRef.current = {
+        panX, panY, scale, updateCanvas: () => {
+            clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
+        }
+    };
+
+}
+
+function screenToCanvas(
+    clientX: number,
+    clientY: number,
+    canvas: HTMLCanvasElement,
+    panX: number,
+    panY: number,
+    scale: number
+) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left - panX) / scale;
+    const y = (clientY - rect.top - panY) / scale;
+    return { x, y };
 }
 
 
-function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], canvas: HTMLCanvasElement) {
+function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], canvas: HTMLCanvasElement, toolRef: React.RefObject<string>, panX: number, panY: number, scale: number) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(panX, panY);
+    ctx.scale(scale, scale);
+
     ctx.fillStyle = "rgba(18, 18, 18)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(-panX / scale, -panY / scale, canvas.width / scale, canvas.height / scale);
     if (existingDrawings.length > 0) {
         existingDrawings.forEach((shape) => {
             if (shape.type === "rect") {
@@ -92,6 +186,8 @@ function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], 
             }
         });
     }
+    ctx.restore();
+
 
 }
 

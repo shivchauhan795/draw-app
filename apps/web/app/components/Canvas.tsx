@@ -12,11 +12,16 @@ export default function Canvas({ roomID, socket, isLoading, setIsLoading, slug }
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const initRef = useRef(false);
     const toolRef = useRef(isSelected);
-
+    const panRef = useRef({
+        panX: 0,
+        panY: 0,
+        scale: 1,
+        updateCanvas: () => { }
+    });
     useEffect(() => {
         if (canvasRef.current && !initRef.current) {
             initRef.current = true;
-            initDraw(canvasRef.current, roomID, socket, slug, toolRef);
+            initDraw(canvasRef.current, roomID, socket, slug, toolRef, panRef);
         }
     }, [])
     useEffect(() => {
@@ -33,5 +38,9 @@ export default function Canvas({ roomID, socket, isLoading, setIsLoading, slug }
             ref={canvasRef}>
         </canvas>
         <Toolbar />
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white">
+            {/* <p>Scroll X: {panRef.current.panX.toFixed(0)} | Y: {panRef.current.panY.toFixed(0)}</p> */}
+            <p>Zoom: {Math.round(panRef.current.scale * 100)}%</p>
+        </div>
     </div>;
 }
