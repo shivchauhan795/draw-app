@@ -6,6 +6,10 @@ import HandIcon from '../icons/hand.svg';
 import HandIconFilled from '../icons/hand_filled.svg';
 import TextIcon from '../icons/text.svg';
 import TextIconFilled from '../icons/text_filled.svg';
+import LineIcon from '../icons/line.svg';
+import ArrowIcon from '../icons/arrow.svg';
+import ImageIcon from '../icons/image.svg';
+import ImageIconFilled from '../icons/image_filled.svg';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { stateContext } from '../utils/context/stateContext';
@@ -15,6 +19,9 @@ const Icons = [
     { icon: RectangleIcon, filledIcon: RectangleIconFilled, name: "Rectangle", key: "2" },
     { icon: CircleIcon, filledIcon: CircleIconFilled, name: "Circle", key: "3" },
     { icon: TextIcon, filledIcon: TextIconFilled, name: "Text", key: "4" },
+    { icon: LineIcon, filledIcon: LineIcon, name: "Line", key: "5" },
+    { icon: ArrowIcon, filledIcon: ArrowIcon, name: "Arrow", key: "6" },
+    { icon: ImageIcon, filledIcon: ImageIconFilled, name: "Image", key: "7" },
 ];
 
 const Toolbar = () => {
@@ -33,6 +40,12 @@ const Toolbar = () => {
                 setIsSelected("Circle");
             } else if (e.key === Icons[3]?.key) {
                 setIsSelected("Text");
+            } else if (e.key === Icons[4]?.key) {
+                setIsSelected("Line");
+            } else if (e.key === Icons[5]?.key) {
+                setIsSelected("Arrow");
+            } else if (e.key === Icons[6]?.key) {
+                setIsSelected("Image");
             }
         }
         window.addEventListener("keydown", onkeydown);

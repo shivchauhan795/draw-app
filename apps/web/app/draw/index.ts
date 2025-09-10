@@ -17,6 +17,25 @@ type Shapes = {
     x: number;
     y: number;
     text: string;
+} | {
+    type: "line",
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+} | {
+    type: "arrow",
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+} | {
+    type: "image",
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    src: string;
 };
 
 export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number, socket: WebSocket, slug: string, toolRef: React.RefObject<string>, panRef: React.RefObject<{ panX: number, panY: number, scale: number, updateCanvas: Function }>) {
@@ -124,6 +143,22 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
                     roomId: slug
                 })
             );
+        } else if (toolRef.current === 'Line') {
+            const shape: Shapes = {
+                type: "line",
+                x1: startX,
+                y1: startY,
+                x2: endX,
+                y2: endY
+            }
+            exsistingDrawings.push(shape);
+            socket.send(
+                JSON.stringify({
+                    type: "chat",
+                    message: JSON.stringify(shape),
+                    roomId: slug
+                })
+            );
         }
     });
 
@@ -152,7 +187,21 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
             ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
             ctx.stroke();
             ctx.restore();
+        } else if (clicked && toolRef.current === "Line") {
+            const { x: currentX, y: currentY } = screenToCanvas(e.clientX, e.clientY, canvas, panX, panY, scale);
+            clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
+            ctx.save();
+            ctx.translate(panX, panY);
+            ctx.scale(scale, scale);
+            ctx.strokeStyle = "rgba(255,255,255)";
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+            ctx.restore();
         }
+
+
         if (clicked && toolRef.current === 'Pan') {
             const dx = e.clientX - lastMouseX;
             const dy = e.clientY - lastMouseY;
@@ -245,6 +294,12 @@ function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], 
                 ctx.fillStyle = "rgba(255,255,255)";
                 ctx.font = "50px arial";
                 ctx.fillText(shape.text, shape.x, shape.y);
+            } else if (shape.type === "line") {
+                ctx.strokeStyle = "rgba(255,255,255)";
+                ctx.beginPath();
+                ctx.moveTo(shape.x1, shape.y1);
+                ctx.lineTo(shape.x2, shape.y2);
+                ctx.stroke();
             }
         });
     }
