@@ -65,18 +65,34 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
         isPanning = false;
         const { x: endX, y: endY } = screenToCanvas(e.clientX, e.clientY, canvas, panX, panY, scale);
 
-        const shape: Shapes = {
-            type: "rect",
-            x: startX,
-            y: startY,
-            width: endX - startX,
-            height: endY - startY
-        }
         if (toolRef.current === 'Rectangle') {
+            const shape: Shapes = {
+                type: "rect",
+                x: startX,
+                y: startY,
+                width: endX - startX,
+                height: endY - startY
+            }
 
             if (shape.width == 0 && shape.height == 0) return;
             exsistingDrawings.push(shape);
 
+            socket.send(
+                JSON.stringify({
+                    type: "chat",
+                    message: JSON.stringify(shape),
+                    roomId: slug
+                })
+            );
+        } else if (toolRef.current === 'Circle') {
+            const shape: Shapes = {
+                type: "circle",
+                x: startX,
+                y: startY,
+                radius: Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2))
+            }
+            if (shape.radius == 0) return;
+            exsistingDrawings.push(shape);
             socket.send(
                 JSON.stringify({
                     type: "chat",
@@ -99,6 +115,18 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
             ctx.scale(scale, scale);
             ctx.strokeStyle = "rgba(255,255,255)";
             ctx.strokeRect(startX, startY, width, height);
+            ctx.restore();
+        } else if (clicked && toolRef.current === "Circle") {
+            const { x: currentX, y: currentY } = screenToCanvas(e.clientX, e.clientY, canvas, panX, panY, scale);
+            const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+            clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
+            ctx.save();
+            ctx.translate(panX, panY);
+            ctx.scale(scale, scale);
+            ctx.strokeStyle = "rgba(255,255,255)";
+            ctx.beginPath();
+            ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+            ctx.stroke();
             ctx.restore();
         }
         if (clicked && toolRef.current === 'Pan') {
@@ -172,6 +200,7 @@ function screenToCanvas(
 function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], canvas: HTMLCanvasElement, toolRef: React.RefObject<string>, panX: number, panY: number, scale: number) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.arc(0, 0, 10, 0, 2 * Math.PI);
     ctx.save();
     ctx.translate(panX, panY);
     ctx.scale(scale, scale);
@@ -183,6 +212,11 @@ function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], 
             if (shape.type === "rect") {
                 ctx.strokeStyle = "rgba(255,255,255";
                 ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+            }else if(shape.type === "circle") {
+                ctx.strokeStyle = "rgba(255,255,255)";
+                ctx.beginPath();
+                ctx.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI);
+                ctx.stroke();
             }
         });
     }
