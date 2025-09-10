@@ -12,7 +12,12 @@ type Shapes = {
     x: number;
     y: number;
     radius: number;
-}
+} | {
+    type: "text",
+    x: number;
+    y: number;
+    text: string;
+};
 
 export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number, socket: WebSocket, slug: string, toolRef: React.RefObject<string>, panRef: React.RefObject<{ panX: number, panY: number, scale: number, updateCanvas: Function }>) {
     const ctx = canvas.getContext("2d");
@@ -47,6 +52,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
     let clicked = false;
     let startX = 0;
     let startY = 0;
+    let text = "";
 
     canvas.addEventListener("mousedown", (e) => {
         clicked = true;
@@ -92,6 +98,24 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
                 radius: Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2))
             }
             if (shape.radius == 0) return;
+            exsistingDrawings.push(shape);
+            socket.send(
+                JSON.stringify({
+                    type: "chat",
+                    message: JSON.stringify(shape),
+                    roomId: slug
+                })
+            );
+        } else if (toolRef.current === 'Text') {
+            const userText = prompt("Enter text:");
+            if (!userText) return;
+
+            const shape: Shapes = {
+                type: "text",
+                x: startX,
+                y: startY,
+                text: userText
+            }
             exsistingDrawings.push(shape);
             socket.send(
                 JSON.stringify({
@@ -212,11 +236,15 @@ function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], 
             if (shape.type === "rect") {
                 ctx.strokeStyle = "rgba(255,255,255";
                 ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-            }else if(shape.type === "circle") {
+            } else if (shape.type === "circle") {
                 ctx.strokeStyle = "rgba(255,255,255)";
                 ctx.beginPath();
                 ctx.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI);
                 ctx.stroke();
+            } else if (shape.type === "text") {
+                ctx.fillStyle = "rgba(255,255,255)";
+                ctx.font = "50px arial";
+                ctx.fillText(shape.text, shape.x, shape.y);
             }
         });
     }
