@@ -159,6 +159,22 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
                     roomId: slug
                 })
             );
+        } else if (toolRef.current === 'Arrow') {
+            const shape: Shapes = {
+                type: "arrow",
+                x1: startX,
+                y1: startY,
+                x2: endX,
+                y2: endY
+            }
+            exsistingDrawings.push(shape);
+            socket.send(
+                JSON.stringify({
+                    type: "chat",
+                    message: JSON.stringify(shape),
+                    roomId: slug
+                })
+            );
         }
     });
 
@@ -198,6 +214,31 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomID: Number
             ctx.moveTo(startX, startY);
             ctx.lineTo(currentX, currentY);
             ctx.stroke();
+            ctx.restore();
+        } else if (clicked && toolRef.current === 'Arrow') {
+            const { x: currentX, y: currentY } = screenToCanvas(e.clientX, e.clientY, canvas, panX, panY, scale);
+            clearCanvas(ctx, exsistingDrawings, canvas, toolRef, panX, panY, scale);
+            ctx.save();
+            ctx.translate(panX, panY);
+            ctx.scale(scale, scale);
+            ctx.strokeStyle = "rgba(255,255,255)";
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+
+            const angle = Math.atan2(currentY - startY, currentX - startX);
+            const headLength = 10;
+            ctx.save();
+            ctx.translate(currentX, currentY);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-headLength, -headLength / 2);
+            ctx.lineTo(-headLength, headLength / 2);
+            ctx.closePath();
+            ctx.fill();
+
             ctx.restore();
         }
 
@@ -300,7 +341,29 @@ function clearCanvas(ctx: CanvasRenderingContext2D, existingDrawings: Shapes[], 
                 ctx.moveTo(shape.x1, shape.y1);
                 ctx.lineTo(shape.x2, shape.y2);
                 ctx.stroke();
+            } else if (shape.type === "arrow") {
+                ctx.strokeStyle = "rgba(255,255,255)";
+                ctx.beginPath();
+                ctx.moveTo(shape.x1, shape.y1);
+                ctx.lineTo(shape.x2, shape.y2);
+                ctx.stroke();
+
+                const angle = Math.atan2(shape.y2 - shape.y1, shape.x2 - shape.x1);
+                const headLength = 10;
+
+                ctx.save();
+                ctx.translate(shape.x2, shape.y2);
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-headLength, -headLength / 2);
+                ctx.lineTo(-headLength, headLength / 2);
+                ctx.closePath();
+                ctx.fillStyle = "rgba(255,255,255)";
+                ctx.fill();
+                ctx.restore();
             }
+
         });
     }
     ctx.restore();
