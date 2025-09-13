@@ -14,7 +14,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     setToken(storedToken);
     setIsLoading(false); // ✅ done loading
     if (storedToken) {
-      router.push("/"); // redirect if token exists
+      router.push("/dashboard"); // redirect if token exists
     }
   }, []);
 

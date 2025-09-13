@@ -202,6 +202,52 @@ app.get("/room/:slug", middleware, async (req: Request, res: Response) => {
     }
 })
 
+app.get("/rooms", middleware, async (req: Request, res: Response) => {
+    try {
+        const rooms = await prismaClient.room.findMany({
+            where: {
+                members: {
+                    some: {
+                        // @ts-ignore
+                        id: req.userId
+                    }
+                }
+            },
+        })
+        res.send(rooms);
+    } catch (e) {
+        res.status(500).send({
+            message: "something went wrong"
+        });
+    }
+})
+
+app.delete("/room/:roomId", middleware, async (req: Request, res: Response) => {
+    if (!req.params.roomId) {
+        res.status(400).send({
+            message: "invalid room id"
+        });
+        return;
+    }
+    const roomId = parseInt(req.params.roomId);
+    try {
+        await prismaClient.room.deleteMany({
+            where: {
+                id: roomId,
+                // @ts-ignore
+                adminId: req.userId
+            }
+        })
+        res.send({
+            message: "Room Deleted Successfully"
+        })
+    } catch (e) {
+        res.status(500).send({
+            message: "something went wrong"
+        });
+    }
+})
+
 
 app.listen(3001, () => {
     console.log("http-backend listening on port 3001");

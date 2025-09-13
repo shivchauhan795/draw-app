@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
 import { StateContextProvider } from "./utils/context/stateContext";
+import { Caveat } from 'next/font/google'
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-});
+
+const caveat = Caveat({
+  subsets: ['latin'],
+})
 
 export const metadata: Metadata = {
   title: "Chat App",
@@ -23,10 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={caveat.className}>
+      <body>
         <StateContextProvider>
-        {children}
+          {children}
         </StateContextProvider>
       </body>
     </html>
